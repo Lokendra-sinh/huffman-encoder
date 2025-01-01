@@ -27,13 +27,27 @@
         padding: 2rem;
       }
 
+      .rain {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: -1;
+        opacity: 0.5;
+      }
+
       .container {
-        max-width: 1200px;
+        position: relative;
+        z-index: 1;
+        max-width: 1400px;
         margin: 0 auto;
         padding: 20px;
         border: 1px solid var(--border);
         border-radius: 8px;
         box-shadow: 0 0 20px var(--matrix-dark-green);
+        background: rgba(0, 0, 0, 0.8);
       }
 
       h1 {
@@ -42,11 +56,25 @@
         text-shadow: 0 0 10px var(--matrix-green);
       }
 
+      /* New split layout */
       .input-section {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
         margin-bottom: 2rem;
-        padding: 1rem;
+      }
+
+      .encode-box,
+      .decode-box {
         background: var(--matrix-dark-green);
+        padding: 1.5rem;
         border-radius: 4px;
+      }
+
+      .box-title {
+        color: var(--matrix-green);
+        margin-bottom: 1rem;
+        font-size: 1.2rem;
       }
 
       textarea {
@@ -59,6 +87,11 @@
         margin-bottom: 1rem;
         resize: vertical;
         font-size: 1rem;
+      }
+
+      .button-group {
+        display: flex;
+        gap: 1rem;
       }
 
       button {
@@ -87,25 +120,17 @@
         background: var(--matrix-dark-green);
         padding: 1rem;
         border-radius: 4px;
+        height: 300px;
+        overflow-y: auto;
       }
 
       .output-box h3 {
         margin-bottom: 1rem;
         color: var(--matrix-green);
-      }
-
-      .byte-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
-        gap: 0.5rem;
-      }
-
-      .byte {
-        background: var(--background);
-        padding: 0.5rem;
-        text-align: center;
-        border: 1px solid var(--border);
-        font-size: 0.8rem;
+        position: sticky;
+        top: 0;
+        background: var(--matrix-dark-green);
+        padding: 0.5rem 0;
       }
 
       .stats {
@@ -114,90 +139,21 @@
         border-top: 1px solid var(--border);
       }
 
-      /* Matrix rain effect */
-      .rain {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        pointer-events: none;
-        z-index: -1;
-        opacity: 0.1;
+      #upload-input {
+        display: none;
       }
 
-      .output-box {
-  background: var(--matrix-dark-green);
-  padding: 1rem;
-  border-radius: 4px;
-  height: 400px;  /* Fixed height */
-  display: flex;
-  flex-direction: column;
-}
-
-.output-box h3 {
-  margin-bottom: 1rem;
-  color: var(--matrix-green);
-  flex-shrink: 0;  /* Prevent header from shrinking */
-}
-
-/* Make the content areas scrollable */
-#byte-display.byte-grid {
-  overflow-y: auto;
-  flex-grow: 1;  /* Take remaining space */
-  margin-bottom: 1rem;
-  max-height: calc(100% - 100px);  /* Leave space for stats */
-}
-
-#encoding-map {
-  overflow-y: auto;
-  flex-grow: 1;  /* Take remaining space */
-  height: calc(100% - 40px);  /* Leave space for header */
-}
-
-/* Keep stats at the bottom */
-.stats {
-  margin-top: auto;  /* Push to bottom */
-  padding-top: 1rem;
-  border-top: 1px solid var(--border);
-  background: var(--matrix-dark-green);
-  flex-shrink: 0;  /* Prevent stats from shrinking */
-  position: sticky;
-  bottom: 0;
-}
-
-/* Add a subtle scrollbar style */
-.byte-grid::-webkit-scrollbar,
-#encoding-map::-webkit-scrollbar {
-  width: 8px;
-}
-
-.byte-grid::-webkit-scrollbar-track,
-#encoding-map::-webkit-scrollbar-track {
-  background: var(--background);
-}
-
-.byte-grid::-webkit-scrollbar-thumb,
-#encoding-map::-webkit-scrollbar-thumb {
-  background: var(--matrix-green);
-  border-radius: 4px;
-}
-
-      /* Glowing effect */
-      @keyframes glow {
-        0% {
-          box-shadow: 0 0 5px var(--matrix-green);
-        }
-        50% {
-          box-shadow: 0 0 20px var(--matrix-green);
-        }
-        100% {
-          box-shadow: 0 0 5px var(--matrix-green);
-        }
+      .output-box::-webkit-scrollbar {
+        width: 8px;
       }
 
-      .container {
-        animation: glow 2s infinite;
+      .output-box::-webkit-scrollbar-track {
+        background: var(--background);
+      }
+
+      .output-box::-webkit-scrollbar-thumb {
+        background: var(--matrix-green);
+        border-radius: 4px;
       }
     </style>
   </head>
@@ -207,19 +163,35 @@
       <h1>Huffman Encoder</h1>
 
       <div class="input-section">
-        <textarea
-          id="input-text"
-          placeholder="Enter text to encode..."
-        ></textarea>
-        <button id="encode-btn">Encode</button>
-        <button id="decode-btn">Decode</button>
+        <div class="encode-box">
+          <h2 class="box-title">Enter Text to Encode</h2>
+          <textarea
+            id="input-text"
+            placeholder="Enter your text here..."
+          ></textarea>
+          <div class="button-group">
+            <button id="encode-btn">Encode</button>
+            <button id="download-btn">Download Encoded Content</button>
+          </div>
+        </div>
+
+        <div class="decode-box">
+          <h2 class="box-title">Enter Encoded Content to Decode</h2>
+          <textarea
+            id="encoded-text"
+            placeholder="Enter or upload encoded content here..."
+          ></textarea>
+          <div class="button-group">
+            <button id="decode-btn">Decode</button>
+            <button id="upload-btn">Upload Encoded Content</button>
+            <input type="file" id="upload-input" accept=".json" />
+          </div>
+        </div>
       </div>
 
       <div class="output-section">
         <div class="output-box">
-          <h3>Encoded Bytes</h3>
-          <div id="byte-display" class="byte-grid">
-          </div>
+          <h3>Statistics</h3>
           <div class="stats">
             <p>Original Size: <span id="original-size">0</span> bytes</p>
             <p>Compressed Size: <span id="compressed-size">0</span> bytes</p>
@@ -228,8 +200,7 @@
         </div>
         <div class="output-box">
           <h3>Encoding Map</h3>
-          <div id="encoding-map">
-          </div>
+          <div id="encoding-map"></div>
         </div>
       </div>
     </div>
@@ -279,228 +250,288 @@
 
     <!-- Huffman encoder implementation -->
     <script>
-     class MinHeap {
-            constructor() {
-                this.heap = [];
-            }
-  
-            construct(array) {
-                array.forEach((element) => {
-                    this.insert(element);
-                });
-            }
-  
-            insert(n) {
-                this.heap.push(n);
-                let currentIndex = this.heap.length - 1;
-  
-                while (currentIndex > 0) {
-                    const parentIndex = Math.floor((currentIndex - 1) / 2);
-                    if (this.heap[parentIndex].freq > this.heap[currentIndex].freq) {
-                        [this.heap[parentIndex], this.heap[currentIndex]] = [
-                            this.heap[currentIndex],
-                            this.heap[parentIndex],
-                        ];
-                        currentIndex = parentIndex;
-                    } else {
-                        break;
-                    }
-                }
-            }
-  
-            extractMin() {
-                if (this.heap.length === 0) return null;
-                if (this.heap.length === 1) return this.heap.pop();
-  
-                const min = this.heap[0];
-                this.heap[0] = this.heap.pop();
-                this.sinkDown(0);
-  
-                return min;
-            }
-  
-            sinkDown(index) {
-                const length = this.heap.length;
-                const element = this.heap[index];
-  
-                while (true) {
-                    const leftChildIndex = 2 * index + 1;
-                    const rightChildIndex = 2 * index + 2;
-                    let smallestChildIndex = null;
-  
-                    if (leftChildIndex < length && this.heap[leftChildIndex].freq < element.freq) {
-                        smallestChildIndex = leftChildIndex;
-                    }
-  
-                    if (
-                        rightChildIndex < length &&
-                        this.heap[rightChildIndex].freq < element.freq &&
-                        this.heap[rightChildIndex].freq < this.heap[leftChildIndex].freq
-                    ) {
-                        smallestChildIndex = rightChildIndex;
-                    }
-  
-                    if (smallestChildIndex === null) break;
-  
-                    [this.heap[index], this.heap[smallestChildIndex]] = [
-                        this.heap[smallestChildIndex],
-                        this.heap[index],
-                    ];
-  
-                    index = smallestChildIndex;
-                }
-            }
+      class MinHeap {
+        constructor() {
+          this.heap = [];
         }
 
-      class HuffmanEncoder {
-            constructor() {
-                this.freqMap = {};
-                this.encodingMap = {};
-                this.minHeap = new MinHeap();
-                this.rootNode = null;
-            }
-  
-            processText(text) {
-                // Build frequency map
-                this.freqMap = {};
-                for (let char of text) {
-                    this.freqMap[char] = (this.freqMap[char] || 0) + 1;
-                }
-  
-                // Convert to array format for MinHeap
-                const freqArray = Object.entries(this.freqMap).map(([char, freq]) => ({
-                    char,
-                    freq
-                }));
-  
-                // Build tree and generate encoding
-                this.buildHuffmanTree(freqArray);
-                this.generateEncodingMap();
-  
-                return {
-                    freqArray,
-                    encodingMap: this.encodingMap
-                };
-            }
-  
-            buildHuffmanTree(freqArray) {
-                this.minHeap = new MinHeap();
-                this.minHeap.construct(freqArray);
-  
-                while (this.minHeap.heap.length > 1) {
-                    const firstSmallestNode = this.minHeap.extractMin();
-                    const secondSmallestNode = this.minHeap.extractMin();
-  
-                    const combinedFreq = firstSmallestNode.freq + secondSmallestNode.freq;
-                    const newCombinedNode = {
-                        freq: combinedFreq,
-                        char: null,
-                        leftNode: firstSmallestNode,
-                        rightNode: secondSmallestNode
-                    };
-  
-                    this.minHeap.insert(newCombinedNode);
-                }
-  
-                this.rootNode = this.minHeap.extractMin();
-                return this.rootNode;
-            }
-  
-            generateEncodingMap() {
-                const bitPattern = [];
-                
-                const traverse = (node, bitPattern) => {
-                    if (node.char) {
-                        this.encodingMap[node.char] = bitPattern.join('');
-                        return;
-                    }
-  
-                    if (node.leftNode) {
-                        bitPattern.push('0');
-                        traverse(node.leftNode, bitPattern);
-                        bitPattern.pop();
-                    }
-  
-                    if (node.rightNode) {
-                        bitPattern.push('1');
-                        traverse(node.rightNode, bitPattern);
-                        bitPattern.pop();
-                    }
-                };
-  
-                traverse(this.rootNode, bitPattern);
-                return this.encodingMap;
-            }
-  
-            encodeText(text) {
-                let totalBitsWeNeed = 0;
-                
-                for(let char of text) {
-                    if (!this.encodingMap[char]) {
-                        throw new Error(`Character "${char}" not found in encoding map`);
-                    }
-                    totalBitsWeNeed += this.encodingMap[char].length;
-                }
-  
-                const encodedContent = new Uint8Array(Math.ceil(totalBitsWeNeed/8));
-                let currentByteIndex = 0;
-                let byte = 0;
-                let bitsUsed = 0;
-                
-                for (let char of text) {
-                    const encodedBits = this.encodingMap[char];
-        
-                    for(let i = 0; i < encodedBits.length; i++) {
-                        const bit = encodedBits[i];
-                        
-                        if(bit === '1') {
-                            const shiftBy = 7 - bitsUsed;
-                            byte |= (1 << shiftBy);
-                        }
-                        
-                        bitsUsed++;
-                        
-                        if(bitsUsed === 8) {
-                            encodedContent[currentByteIndex] = byte;
-                            currentByteIndex++;
-                            bitsUsed = 0;
-                            byte = 0;
-                        }
-                    }
-                }
-        
-                if(bitsUsed > 0) {
-                    encodedContent[currentByteIndex] = byte;
-                }
-        
-                return encodedContent;
-            }
-  
-            decode(encodedContent) {
-                let decodedContent = [];
-                let currentPath = this.rootNode;
-                
-                for(let i = 0; i < encodedContent.length; i++) {
-                    const byte = encodedContent[i];
-                    const bitPattern = byte.toString(2).padStart(8, '0');
-                    
-                    for(let bit of bitPattern) {
-                        if(bit === '0') {
-                            currentPath = currentPath.leftNode;
-                        } else {
-                            currentPath = currentPath.rightNode;
-                        }
-                        
-                        if(currentPath.char) {
-                            decodedContent.push(currentPath.char);
-                            currentPath = this.rootNode;
-                        }
-                    }
-                }
-            
-                return decodedContent.join('');
-            }
+        construct(array) {
+          array.forEach((element) => {
+            this.insert(element);
+          });
         }
+
+        insert(n) {
+          this.heap.push(n);
+          let currentIndex = this.heap.length - 1;
+
+          while (currentIndex > 0) {
+            const parentIndex = Math.floor((currentIndex - 1) / 2);
+            if (this.heap[parentIndex].freq > this.heap[currentIndex].freq) {
+              [this.heap[parentIndex], this.heap[currentIndex]] = [
+                this.heap[currentIndex],
+                this.heap[parentIndex],
+              ];
+              currentIndex = parentIndex;
+            } else {
+              break;
+            }
+          }
+        }
+
+        extractMin() {
+          if (this.heap.length === 0) return null;
+          if (this.heap.length === 1) return this.heap.pop();
+
+          const min = this.heap[0];
+          this.heap[0] = this.heap.pop();
+          this.sinkDown(0);
+
+          return min;
+        }
+
+        sinkDown(index) {
+          const length = this.heap.length;
+          const element = this.heap[index];
+
+          while (true) {
+            const leftChildIndex = 2 * index + 1;
+            const rightChildIndex = 2 * index + 2;
+            let smallestChildIndex = null;
+
+            if (
+              leftChildIndex < length &&
+              this.heap[leftChildIndex].freq < element.freq
+            ) {
+              smallestChildIndex = leftChildIndex;
+            }
+
+            if (
+              rightChildIndex < length &&
+              this.heap[rightChildIndex].freq < element.freq &&
+              this.heap[rightChildIndex].freq < this.heap[leftChildIndex].freq
+            ) {
+              smallestChildIndex = rightChildIndex;
+            }
+
+            if (smallestChildIndex === null) break;
+
+            [this.heap[index], this.heap[smallestChildIndex]] = [
+              this.heap[smallestChildIndex],
+              this.heap[index],
+            ];
+
+            index = smallestChildIndex;
+          }
+        }
+      }
+
+      class HuffmanEncoder {
+        constructor() {
+          this.freqMap = {};
+          this.encodingMap = {};
+          this.minHeap = new MinHeap();
+          this.rootNode = null;
+        }
+
+        processText(text) {
+          // Build frequency map
+          this.freqMap = {};
+          for (let char of text) {
+            this.freqMap[char] = (this.freqMap[char] || 0) + 1;
+          }
+
+          // Convert to array format for MinHeap
+          const freqArray = Object.entries(this.freqMap).map(
+            ([char, freq]) => ({
+              char,
+              freq,
+            })
+          );
+
+          // Build tree and generate encoding
+          this.buildHuffmanTree(freqArray);
+          this.generateEncodingMap();
+
+          return {
+            freqArray,
+            encodingMap: this.encodingMap,
+          };
+        }
+
+        buildHuffmanTree(freqArray) {
+          this.minHeap = new MinHeap();
+          this.minHeap.construct(freqArray);
+
+          if (freqArray.length === 1) {
+            const singleNode = this.minHeap.extractMin();
+            // Create a simple tree with one path. this is the special case when the entire content consist of same character
+            this.rootNode = {
+              freq: singleNode.freq,
+              char: null,
+              leftNode: singleNode, // Put the character in left node
+              rightNode: {
+                // Add a dummy right node
+                freq: 0,
+                char: null,
+                leftNode: null,
+                rightNode: null,
+              },
+            };
+            return this.rootNode;
+          }
+
+          while (this.minHeap.heap.length > 1) {
+            const firstSmallestNode = this.minHeap.extractMin();
+            const secondSmallestNode = this.minHeap.extractMin();
+
+            const combinedFreq =
+              firstSmallestNode.freq + secondSmallestNode.freq;
+            const newCombinedNode = {
+              freq: combinedFreq,
+              char: null,
+              leftNode: firstSmallestNode,
+              rightNode: secondSmallestNode,
+            };
+
+            this.minHeap.insert(newCombinedNode);
+          }
+
+          this.rootNode = this.minHeap.extractMin();
+          return this.rootNode;
+        }
+
+        rebuildTreeFromMap(encodingMap) {
+          this.rootNode = {};
+
+          // For each character in the encoding map, rebuild the tree path
+          Object.entries(encodingMap).forEach(([char, code]) => {
+            let currentNode = this.rootNode;
+
+            // Traverse the code and build nodes
+            for (let i = 0; i < code.length; i++) {
+              if (code[i] === "0") {
+                if (!currentNode.leftNode) {
+                  currentNode.leftNode = {
+                    char: null,
+                    freq: 0,
+                  };
+                }
+                currentNode = currentNode.leftNode;
+              } else {
+                if (!currentNode.rightNode) {
+                  currentNode.rightNode = {
+                    char: null,
+                    freq: 0,
+                  };
+                }
+                currentNode = currentNode.rightNode;
+              }
+
+              // If this is the last bit, set the character
+              if (i === code.length - 1) {
+                currentNode.char = char;
+              }
+            }
+          });
+        }
+
+        generateEncodingMap() {
+          const bitPattern = [];
+
+          const traverse = (node, bitPattern) => {
+            if (node.char) {
+              this.encodingMap[node.char] = bitPattern.join("");
+              return;
+            }
+
+            if (node.leftNode) {
+              bitPattern.push("0");
+              traverse(node.leftNode, bitPattern);
+              bitPattern.pop();
+            }
+
+            if (node.rightNode) {
+              bitPattern.push("1");
+              traverse(node.rightNode, bitPattern);
+              bitPattern.pop();
+            }
+          };
+
+          traverse(this.rootNode, bitPattern);
+          return this.encodingMap;
+        }
+
+        encodeText(text) {
+          let totalBitsWeNeed = 0;
+
+          for (let char of text) {
+            if (!this.encodingMap[char]) {
+              throw new Error(`Character "${char}" not found in encoding map`);
+            }
+            totalBitsWeNeed += this.encodingMap[char].length;
+          }
+
+          // reason to use Uint8Array is to store raw bits. Normal js string concatenation won't work here. we need to store bit by bit and need to calculate how much space we need in terms of
+          const encodedContent = new Uint8Array(Math.ceil(totalBitsWeNeed / 8));
+          let currentByteIndex = 0;
+          let byte = 0;
+          let bitsUsed = 0;
+
+          for (let char of text) {
+            const encodedBits = this.encodingMap[char];
+
+            for (let i = 0; i < encodedBits.length; i++) {
+              const bit = encodedBits[i];
+
+              if (bit === "1") {
+                const shiftBy = 7 - bitsUsed;
+                byte |= 1 << shiftBy;
+              }
+
+              bitsUsed++;
+
+              if (bitsUsed === 8) {
+                encodedContent[currentByteIndex] = byte;
+                currentByteIndex++;
+                bitsUsed = 0;
+                byte = 0;
+              }
+            }
+          }
+
+          if (bitsUsed > 0) {
+            encodedContent[currentByteIndex] = byte;
+          }
+
+          return encodedContent;
+        }
+
+        decode(encodedContent) {
+          let decodedContent = [];
+          let currentPath = this.rootNode;
+
+          for (let i = 0; i < encodedContent.length; i++) {
+            const byte = encodedContent[i];
+            const bitPattern = byte.toString(2).padStart(8, "0");
+
+            for (let bit of bitPattern) {
+              if (bit === "0") {
+                currentPath = currentPath.leftNode;
+              } else {
+                currentPath = currentPath.rightNode;
+              }
+
+              if (currentPath.char) {
+                decodedContent.push(currentPath.char);
+                currentPath = this.rootNode;
+              }
+            }
+          }
+
+          return decodedContent.join("");
+        }
+      }
 
       // Create global encoder instance
       window.encoder = new HuffmanEncoder();
@@ -509,88 +540,183 @@
     <!-- Application logic -->
     <script>
       // UI update functions
-      function updateByteDisplay(bytes) {
-          const byteDisplay = document.getElementById('byte-display');
-          byteDisplay.innerHTML = '';
-          
-          bytes.forEach((byte, index) => {
-              const byteElement = document.createElement('div');
-              byteElement.className = 'byte';
-              byteElement.style.opacity = '0';
-              byteElement.style.transform = 'translateY(20px)';
-              byteElement.textContent = byte.toString(2).padStart(8, '0');
-              byteDisplay.appendChild(byteElement);
+      function bytesToString(bytes) {
+        return Array.from(bytes)
+          .map((byte) => byte.toString(2).padStart(8, "0"))
+          .join(" ");
+      }
 
-              setTimeout(() => {
-                  byteElement.style.transition = 'all 0.3s ease';
-                  byteElement.style.opacity = '1';
-                  byteElement.style.transform = 'translateY(0)';
-              }, index * 30);
-          });
+      // Helper function to convert string representation back to bytes
+      function stringToBytes(str) {
+        return new Uint8Array(
+          str.split(" ").map((binary) => parseInt(binary, 2))
+        );
+      }
+
+      function updateByteDisplay(bytes) {
+        const byteDisplay = document.getElementById("byte-display");
+        byteDisplay.innerHTML = "";
+
+        bytes.forEach((byte, index) => {
+          const byteElement = document.createElement("div");
+          byteElement.className = "byte";
+          byteElement.style.opacity = "0";
+          byteElement.style.transform = "translateY(20px)";
+          byteElement.textContent = byte.toString(2).padStart(8, "0");
+          byteDisplay.appendChild(byteElement);
+
+          setTimeout(() => {
+            byteElement.style.transition = "all 0.3s ease";
+            byteElement.style.opacity = "1";
+            byteElement.style.transform = "translateY(0)";
+          }, index * 30);
+        });
       }
 
       function updateEncodingMap(map) {
-          const mapDisplay = document.getElementById('encoding-map');
-          mapDisplay.innerHTML = '';
-          
-          Object.entries(map).forEach(([char, code], index) => {
-              const p = document.createElement('p');
-              p.style.opacity = '0';
-              p.style.transform = 'translateX(-20px)';
-              p.textContent = `'${char === '\n' ? '\\n' : char}': ${code}`;
-              mapDisplay.appendChild(p);
+        const mapDisplay = document.getElementById("encoding-map");
+        mapDisplay.innerHTML = "";
 
-              setTimeout(() => {
-                  p.style.transition = 'all 0.3s ease';
-                  p.style.opacity = '1';
-                  p.style.transform = 'translateX(0)';
-              }, index * 50);
-          });
+        Object.entries(map).forEach(([char, code], index) => {
+          const p = document.createElement("p");
+          p.style.opacity = "0";
+          p.style.transform = "translateX(-20px)";
+          p.textContent = `'${char === "\n" ? "\\n" : char}': ${code}`;
+          mapDisplay.appendChild(p);
+
+          setTimeout(() => {
+            p.style.transition = "all 0.3s ease";
+            p.style.opacity = "1";
+            p.style.transform = "translateX(0)";
+          }, index * 50);
+        });
       }
 
       function updateStats(originalSize, compressedSize) {
-          const ratio = ((originalSize - compressedSize) / originalSize * 100).toFixed(2);
-          document.getElementById('original-size').textContent = originalSize;
-          document.getElementById('compressed-size').textContent = compressedSize;
-          document.getElementById('compression-ratio').textContent = ratio;
+        const ratio = (
+          ((originalSize - compressedSize) / originalSize) *
+          100
+        ).toFixed(2);
+        document.getElementById("original-size").textContent = originalSize;
+        document.getElementById("compressed-size").textContent = compressedSize;
+        document.getElementById("compression-ratio").textContent = ratio;
       }
 
-      // Store encoded data for decoding
+      // Function to download encoded content
+      function downloadEncodedContent(encodedBytes, encodingMap) {
+        const content = JSON.stringify({
+          encoded: Array.from(encodedBytes),
+          encodingMap: encodingMap,
+          timestamp: new Date().toISOString(),
+        });
+
+        const blob = new Blob([content], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "huffman-encoded-content.json";
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+
+      // Initialize file upload handling
+      const uploadBtn = document.getElementById("upload-btn");
+      const uploadInput = document.getElementById("upload-input");
+      const downloadBtn = document.getElementById("download-btn");
+
+      uploadBtn.addEventListener("click", () => {
+        uploadInput.click();
+      });
+
       let lastEncodedContent = null;
 
-      // Event handlers
-      document.getElementById('encode-btn').addEventListener('click', () => {
-          const text = document.getElementById('input-text').value;
-          if (!text) return;
+      document.getElementById("encode-btn").addEventListener("click", () => {
+        const text = document.getElementById("input-text").value;
+        if (!text) return;
 
-          try {
-              const { encodingMap } = window.encoder.processText(text);
-              const encoded = window.encoder.encodeText(text);
-              lastEncodedContent = encoded;
+        try {
+          const { encodingMap } = window.encoder.processText(text);
+          const encoded = window.encoder.encodeText(text);
+          lastEncodedContent = encoded;
 
-              updateByteDisplay(encoded);
-              updateEncodingMap(encodingMap);
-              updateStats(text.length, encoded.length);
-          } catch (error) {
-              console.error('Encoding error:', error);
-              alert('Failed to encode text: ' + error.message);
-          }
+          // Convert encoded bytes to binary string representation
+          const binaryString = bytesToString(encoded);
+
+          document.getElementById("encoded-text").value = binaryString;
+
+          updateEncodingMap(encodingMap);
+          updateStats(text.length, encoded.length);
+
+          downloadBtn.style.display = "inline-block";
+          downloadBtn.onclick = () =>
+            downloadEncodedContent(encoded, encodingMap);
+        } catch (error) {
+          console.error("Encoding error:", error);
+          alert("Failed to encode text: " + error.message);
+        }
       });
 
-      document.getElementById('decode-btn').addEventListener('click', () => {
-          if (!lastEncodedContent) {
-              alert('No encoded content available. Please encode some text first.');
-              return;
+      document.getElementById("decode-btn").addEventListener("click", () => {
+        try {
+          const binaryString = document
+            .getElementById("encoded-text")
+            .value.trim();
+
+          if (!binaryString) {
+            alert("Please enter encoded content to decode.");
+            return;
           }
 
-          try {
-              const decoded = window.encoder.decode(lastEncodedContent);
-              document.getElementById('input-text').value = decoded;
-          } catch (error) {
-              console.error('Decoding error:', error);
-              alert('Failed to decode text: ' + error.message);
-          }
+          lastEncodedContent = stringToBytes(binaryString);
+          const decoded = window.encoder.decode(lastEncodedContent);
+
+          document.getElementById("input-text").value = decoded;
+        } catch (error) {
+          console.error("Decoding error:", error);
+          alert("Failed to decode text: " + error.message);
+        }
+      });
+
+      // Update the upload handler
+      uploadInput.addEventListener("change", async (e) => {
+        try {
+          const file = e.target.files[0];
+          if (!file) return;
+
+          const text = await file.text();
+          const data = JSON.parse(text);
+
+          // Restore the encoding map
+          window.encoder.encodingMap = data.encodingMap;
+
+          // Rebuild the tree from encoding map
+          window.encoder.rebuildTreeFromMap(data.encodingMap);
+
+          // Convert back to Uint8Array
+          const encodedContent = new Uint8Array(data.encoded);
+          lastEncodedContent = encodedContent;
+
+          // Convert to binary string and update the right-side decode box
+          const binaryString = bytesToString(encodedContent);
+          document.getElementById("encoded-text").value = binaryString;
+
+          // Update UI elements
+          updateEncodingMap(data.encodingMap);
+          updateStats(encodedContent.length * 8, encodedContent.length);
+
+          // Show success message
+          alert(
+            "Successfully loaded encoded content! Click decode to see the original text."
+          );
+        } catch (error) {
+          console.error("Error reading file:", error);
+          alert(
+            "Failed to load encoded content. Make sure this is a valid encoded content file."
+          );
+        }
+        // Reset input
+        uploadInput.value = "";
       });
     </script>
-</body>
+  </body>
 </html>
