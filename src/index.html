@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Huffman Encoder - Matrix Edition</title>
+    <style>
+      :root {
+        --matrix-green: #00ff00;
+        --matrix-dark-green: #003300;
+        --background: #000000;
+        --text: #00ff00;
+        --border: #004400;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: "Courier New", monospace;
+      }
+
+      body {
+        background: var(--background);
+        color: var(--text);
+        min-height: 100vh;
+        padding: 2rem;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        box-shadow: 0 0 20px var(--matrix-dark-green);
+      }
+
+      h1 {
+        text-align: center;
+        margin-bottom: 2rem;
+        text-shadow: 0 0 10px var(--matrix-green);
+      }
+
+      .input-section {
+        margin-bottom: 2rem;
+        padding: 1rem;
+        background: var(--matrix-dark-green);
+        border-radius: 4px;
+      }
+
+      textarea {
+        width: 100%;
+        height: 150px;
+        background: var(--background);
+        color: var(--text);
+        border: 1px solid var(--border);
+        padding: 1rem;
+        margin-bottom: 1rem;
+        resize: vertical;
+        font-size: 1rem;
+      }
+
+      button {
+        background: var(--matrix-dark-green);
+        color: var(--text);
+        border: 1px solid var(--matrix-green);
+        padding: 0.5rem 1rem;
+        cursor: pointer;
+        font-size: 1rem;
+        transition: all 0.3s;
+      }
+
+      button:hover {
+        background: var(--matrix-green);
+        color: var(--background);
+        box-shadow: 0 0 10px var(--matrix-green);
+      }
+
+      .output-section {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+      }
+
+      .output-box {
+        background: var(--matrix-dark-green);
+        padding: 1rem;
+        border-radius: 4px;
+      }
+
+      .output-box h3 {
+        margin-bottom: 1rem;
+        color: var(--matrix-green);
+      }
+
+      .byte-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+        gap: 0.5rem;
+      }
+
+      .byte {
+        background: var(--background);
+        padding: 0.5rem;
+        text-align: center;
+        border: 1px solid var(--border);
+        font-size: 0.8rem;
+      }
+
+      .stats {
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border);
+      }
+
+      /* Matrix rain effect */
+      .rain {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: -1;
+        opacity: 0.1;
+      }
+
+      .output-box {
+  background: var(--matrix-dark-green);
+  padding: 1rem;
+  border-radius: 4px;
+  height: 400px;  /* Fixed height */
+  display: flex;
+  flex-direction: column;
+}
+
+.output-box h3 {
+  margin-bottom: 1rem;
+  color: var(--matrix-green);
+  flex-shrink: 0;  /* Prevent header from shrinking */
+}
+
+/* Make the content areas scrollable */
+#byte-display.byte-grid {
+  overflow-y: auto;
+  flex-grow: 1;  /* Take remaining space */
+  margin-bottom: 1rem;
+  max-height: calc(100% - 100px);  /* Leave space for stats */
+}
+
+#encoding-map {
+  overflow-y: auto;
+  flex-grow: 1;  /* Take remaining space */
+  height: calc(100% - 40px);  /* Leave space for header */
+}
+
+/* Keep stats at the bottom */
+.stats {
+  margin-top: auto;  /* Push to bottom */
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+  background: var(--matrix-dark-green);
+  flex-shrink: 0;  /* Prevent stats from shrinking */
+  position: sticky;
+  bottom: 0;
+}
+
+/* Add a subtle scrollbar style */
+.byte-grid::-webkit-scrollbar,
+#encoding-map::-webkit-scrollbar {
+  width: 8px;
+}
+
+.byte-grid::-webkit-scrollbar-track,
+#encoding-map::-webkit-scrollbar-track {
+  background: var(--background);
+}
+
+.byte-grid::-webkit-scrollbar-thumb,
+#encoding-map::-webkit-scrollbar-thumb {
+  background: var(--matrix-green);
+  border-radius: 4px;
+}
+
+      /* Glowing effect */
+      @keyframes glow {
+        0% {
+          box-shadow: 0 0 5px var(--matrix-green);
+        }
+        50% {
+          box-shadow: 0 0 20px var(--matrix-green);
+        }
+        100% {
+          box-shadow: 0 0 5px var(--matrix-green);
+        }
+      }
+
+      .container {
+        animation: glow 2s infinite;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="matrix-rain" class="rain"></canvas>
+    <div class="container">
+      <h1>Huffman Encoder</h1>
+
+      <div class="input-section">
+        <textarea
+          id="input-text"
+          placeholder="Enter text to encode..."
+        ></textarea>
+        <button id="encode-btn">Encode</button>
+        <button id="decode-btn">Decode</button>
+      </div>
+
+      <div class="output-section">
+        <div class="output-box">
+          <h3>Encoded Bytes</h3>
+          <div id="byte-display" class="byte-grid">
+          </div>
+          <div class="stats">
+            <p>Original Size: <span id="original-size">0</span> bytes</p>
+            <p>Compressed Size: <span id="compressed-size">0</span> bytes</p>
+            <p>Compression Ratio: <span id="compression-ratio">0</span>%</p>
+          </div>
+        </div>
+        <div class="output-box">
+          <h3>Encoding Map</h3>
+          <div id="encoding-map">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Matrix rain effect script -->
+    <script>
+      const canvas = document.getElementById("matrix-rain");
+      const ctx = canvas.getContext("2d");
+
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+
+      const matrix = "ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789@#$%^&*()*&^%";
+      const drops = [];
+      const fontSize = 14;
+      const columns = canvas.width / fontSize;
+
+      for (let x = 0; x < columns; x++) {
+        drops[x] = 1;
+      }
+
+      function drawMatrix() {
+        ctx.fillStyle = "rgba(0, 0, 0, 0.04)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.fillStyle = "#00ff00";
+        ctx.font = fontSize + "px monospace";
+
+        for (let i = 0; i < drops.length; i++) {
+          const text = matrix[Math.floor(Math.random() * matrix.length)];
+          ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+
+          if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+            drops[i] = 0;
+          }
+          drops[i]++;
+        }
+      }
+
+      setInterval(drawMatrix, 50);
+
+      window.addEventListener("resize", () => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+      });
+    </script>
+
+    <!-- Huffman encoder implementation -->
+    <script>
+     class MinHeap {
+            constructor() {
+                this.heap = [];
+            }
+  
+            construct(array) {
+                array.forEach((element) => {
+                    this.insert(element);
+                });
+            }
+  
+            insert(n) {
+                this.heap.push(n);
+                let currentIndex = this.heap.length - 1;
+  
+                while (currentIndex > 0) {
+                    const parentIndex = Math.floor((currentIndex - 1) / 2);
+                    if (this.heap[parentIndex].freq > this.heap[currentIndex].freq) {
+                        [this.heap[parentIndex], this.heap[currentIndex]] = [
+                            this.heap[currentIndex],
+                            this.heap[parentIndex],
+                        ];
+                        currentIndex = parentIndex;
+                    } else {
+                        break;
+                    }
+                }
+            }
+  
+            extractMin() {
+                if (this.heap.length === 0) return null;
+                if (this.heap.length === 1) return this.heap.pop();
+  
+                const min = this.heap[0];
+                this.heap[0] = this.heap.pop();
+                this.sinkDown(0);
+  
+                return min;
+            }
+  
+            sinkDown(index) {
+                const length = this.heap.length;
+                const element = this.heap[index];
+  
+                while (true) {
+                    const leftChildIndex = 2 * index + 1;
+                    const rightChildIndex = 2 * index + 2;
+                    let smallestChildIndex = null;
+  
+                    if (leftChildIndex < length && this.heap[leftChildIndex].freq < element.freq) {
+                        smallestChildIndex = leftChildIndex;
+                    }
+  
+                    if (
+                        rightChildIndex < length &&
+                        this.heap[rightChildIndex].freq < element.freq &&
+                        this.heap[rightChildIndex].freq < this.heap[leftChildIndex].freq
+                    ) {
+                        smallestChildIndex = rightChildIndex;
+                    }
+  
+                    if (smallestChildIndex === null) break;
+  
+                    [this.heap[index], this.heap[smallestChildIndex]] = [
+                        this.heap[smallestChildIndex],
+                        this.heap[index],
+                    ];
+  
+                    index = smallestChildIndex;
+                }
+            }
+        }
+
+      class HuffmanEncoder {
+            constructor() {
+                this.freqMap = {};
+                this.encodingMap = {};
+                this.minHeap = new MinHeap();
+                this.rootNode = null;
+            }
+  
+            processText(text) {
+                // Build frequency map
+                this.freqMap = {};
+                for (let char of text) {
+                    this.freqMap[char] = (this.freqMap[char] || 0) + 1;
+                }
+  
+                // Convert to array format for MinHeap
+                const freqArray = Object.entries(this.freqMap).map(([char, freq]) => ({
+                    char,
+                    freq
+                }));
+  
+                // Build tree and generate encoding
+                this.buildHuffmanTree(freqArray);
+                this.generateEncodingMap();
+  
+                return {
+                    freqArray,
+                    encodingMap: this.encodingMap
+                };
+            }
+  
+            buildHuffmanTree(freqArray) {
+                this.minHeap = new MinHeap();
+                this.minHeap.construct(freqArray);
+  
+                while (this.minHeap.heap.length > 1) {
+                    const firstSmallestNode = this.minHeap.extractMin();
+                    const secondSmallestNode = this.minHeap.extractMin();
+  
+                    const combinedFreq = firstSmallestNode.freq + secondSmallestNode.freq;
+                    const newCombinedNode = {
+                        freq: combinedFreq,
+                        char: null,
+                        leftNode: firstSmallestNode,
+                        rightNode: secondSmallestNode
+                    };
+  
+                    this.minHeap.insert(newCombinedNode);
+                }
+  
+                this.rootNode = this.minHeap.extractMin();
+                return this.rootNode;
+            }
+  
+            generateEncodingMap() {
+                const bitPattern = [];
+                
+                const traverse = (node, bitPattern) => {
+                    if (node.char) {
+                        this.encodingMap[node.char] = bitPattern.join('');
+                        return;
+                    }
+  
+                    if (node.leftNode) {
+                        bitPattern.push('0');
+                        traverse(node.leftNode, bitPattern);
+                        bitPattern.pop();
+                    }
+  
+                    if (node.rightNode) {
+                        bitPattern.push('1');
+                        traverse(node.rightNode, bitPattern);
+                        bitPattern.pop();
+                    }
+                };
+  
+                traverse(this.rootNode, bitPattern);
+                return this.encodingMap;
+            }
+  
+            encodeText(text) {
+                let totalBitsWeNeed = 0;
+                
+                for(let char of text) {
+                    if (!this.encodingMap[char]) {
+                        throw new Error(`Character "${char}" not found in encoding map`);
+                    }
+                    totalBitsWeNeed += this.encodingMap[char].length;
+                }
+  
+                const encodedContent = new Uint8Array(Math.ceil(totalBitsWeNeed/8));
+                let currentByteIndex = 0;
+                let byte = 0;
+                let bitsUsed = 0;
+                
+                for (let char of text) {
+                    const encodedBits = this.encodingMap[char];
+        
+                    for(let i = 0; i < encodedBits.length; i++) {
+                        const bit = encodedBits[i];
+                        
+                        if(bit === '1') {
+                            const shiftBy = 7 - bitsUsed;
+                            byte |= (1 << shiftBy);
+                        }
+                        
+                        bitsUsed++;
+                        
+                        if(bitsUsed === 8) {
+                            encodedContent[currentByteIndex] = byte;
+                            currentByteIndex++;
+                            bitsUsed = 0;
+                            byte = 0;
+                        }
+                    }
+                }
+        
+                if(bitsUsed > 0) {
+                    encodedContent[currentByteIndex] = byte;
+                }
+        
+                return encodedContent;
+            }
+  
+            decode(encodedContent) {
+                let decodedContent = [];
+                let currentPath = this.rootNode;
+                
+                for(let i = 0; i < encodedContent.length; i++) {
+                    const byte = encodedContent[i];
+                    const bitPattern = byte.toString(2).padStart(8, '0');
+                    
+                    for(let bit of bitPattern) {
+                        if(bit === '0') {
+                            currentPath = currentPath.leftNode;
+                        } else {
+                            currentPath = currentPath.rightNode;
+                        }
+                        
+                        if(currentPath.char) {
+                            decodedContent.push(currentPath.char);
+                            currentPath = this.rootNode;
+                        }
+                    }
+                }
+            
+                return decodedContent.join('');
+            }
+        }
+
+      // Create global encoder instance
+      window.encoder = new HuffmanEncoder();
+    </script>
+
+    <!-- Application logic -->
+    <script>
+      // UI update functions
+      function updateByteDisplay(bytes) {
+          const byteDisplay = document.getElementById('byte-display');
+          byteDisplay.innerHTML = '';
+          
+          bytes.forEach((byte, index) => {
+              const byteElement = document.createElement('div');
+              byteElement.className = 'byte';
+              byteElement.style.opacity = '0';
+              byteElement.style.transform = 'translateY(20px)';
+              byteElement.textContent = byte.toString(2).padStart(8, '0');
+              byteDisplay.appendChild(byteElement);
+
+              setTimeout(() => {
+                  byteElement.style.transition = 'all 0.3s ease';
+                  byteElement.style.opacity = '1';
+                  byteElement.style.transform = 'translateY(0)';
+              }, index * 30);
+          });
+      }
+
+      function updateEncodingMap(map) {
+          const mapDisplay = document.getElementById('encoding-map');
+          mapDisplay.innerHTML = '';
+          
+          Object.entries(map).forEach(([char, code], index) => {
+              const p = document.createElement('p');
+              p.style.opacity = '0';
+              p.style.transform = 'translateX(-20px)';
+              p.textContent = `'${char === '\n' ? '\\n' : char}': ${code}`;
+              mapDisplay.appendChild(p);
+
+              setTimeout(() => {
+                  p.style.transition = 'all 0.3s ease';
+                  p.style.opacity = '1';
+                  p.style.transform = 'translateX(0)';
+              }, index * 50);
+          });
+      }
+
+      function updateStats(originalSize, compressedSize) {
+          const ratio = ((originalSize - compressedSize) / originalSize * 100).toFixed(2);
+          document.getElementById('original-size').textContent = originalSize;
+          document.getElementById('compressed-size').textContent = compressedSize;
+          document.getElementById('compression-ratio').textContent = ratio;
+      }
+
+      // Store encoded data for decoding
+      let lastEncodedContent = null;
+
+      // Event handlers
+      document.getElementById('encode-btn').addEventListener('click', () => {
+          const text = document.getElementById('input-text').value;
+          if (!text) return;
+
+          try {
+              const { encodingMap } = window.encoder.processText(text);
+              const encoded = window.encoder.encodeText(text);
+              lastEncodedContent = encoded;
+
+              updateByteDisplay(encoded);
+              updateEncodingMap(encodingMap);
+              updateStats(text.length, encoded.length);
+          } catch (error) {
+              console.error('Encoding error:', error);
+              alert('Failed to encode text: ' + error.message);
+          }
+      });
+
+      document.getElementById('decode-btn').addEventListener('click', () => {
+          if (!lastEncodedContent) {
+              alert('No encoded content available. Please encode some text first.');
+              return;
+          }
+
+          try {
+              const decoded = window.encoder.decode(lastEncodedContent);
+              document.getElementById('input-text').value = decoded;
+          } catch (error) {
+              console.error('Decoding error:', error);
+              alert('Failed to decode text: ' + error.message);
+          }
+      });
+    </script>
+</body>
+</html>
